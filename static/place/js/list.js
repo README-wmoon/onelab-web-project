@@ -21,7 +21,7 @@ async function likePost(placeId) {
 }
 
 const getList = (callback) => {
-    fetch(`http://127.0.0.1:10000/place/list/${page}`)
+    fetch(`/place/list/${page}`)
     .then((response) => response.json())
     .then((places) => {
         if(callback){
@@ -145,7 +145,7 @@ function getNewList() {
     // 페이지
     const page = document.querySelector('.current').textContent;
 
-    const url = `http://127.0.0.1:10000/place/list/${page}?areaSort=${areaSort}`;
+    const url = `/place/list/${page}?areaSort=${areaSort}`;
     fetch(url)
         .then(response => response.json())
         .then(places => {
