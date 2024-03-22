@@ -37,26 +37,37 @@ from university.models import University
 
 
 class MemberCheckIdView(APIView):
+    # get으로 받는다
     def get(self, request):
+        # 멤버 아이디를 다른 곳에서 받는다.
         member_id = request.GET['member-id']
+        # 멤버 아이디가 존재 했을 때 쓰인다.
         is_duplicated = Member.objects.filter(member_id=member_id).exists()
         return Response({'isDup': is_duplicated})
 
-
+# 일반 회원가입
 class MemberNormalJoinView(View):
+    # get으로 받는다.
     def get(self, request):
+        # context에서 맴버 이메일이랑 학교 이메일, 아이디를 넣는다.
         context = {
             'memberEmail': request.GET.get('member_email'),
             'memberSchoolEmail': request.GET.get('member_school_email'),
             'id': request.GET.get('id')
         }
 
+        # render로 쓰여 context를 보내준다.
         return render(request, 'login/normal-student-join.html', context)
 
     @transaction.atomic
     def post(self, request):
+
+        # request.POST안에 data 값을 넣는다
         data = request.POST
+        # university 테이블에 있는 university-member-major를 변수에 넣는다.
         university_major = data['university-member-major']
+
+        # 멤버 data를 받아온다.
         data = {
             'member_name': data['member-name'],
             'member_password': data['member-password'],
@@ -66,6 +77,7 @@ class MemberNormalJoinView(View):
 
         }
 
+        # data 안에 있는 Member를 데이터 안에 넣는다.
         member = Member.objects.create(**data)
 
         # member = Member.objects.filter(id=request.POST.get('id'))
@@ -77,7 +89,12 @@ class MemberNormalJoinView(View):
         #
         # else:
         #     member = Member.objects.create(**data)
+
+        # 맴버 아이디를 가져온다.
         member = Member.objects.get(id=member.id)
+
+        # university 테이블에 있는 원하는 데이터를 넣는다.
+        # 위에 쓰였던 멤버 테이블도 같이 넣는다.
         university_info = {
             'university_member_birth': "1999-09-22",
             'university_member_major': university_major,
@@ -85,6 +102,8 @@ class MemberNormalJoinView(View):
         }
         print(university_info)
 
+
+        # university_info 안에 있는 것을 다 추가시켜준다.
         University.objects.create(**university_info)
 
         return redirect('member:login')
@@ -93,6 +112,8 @@ class MemberNormalJoinView(View):
 class MemberJoinView(View):
     def get(self, request):
         print(request.GET.get('member_name'))
+
+        # context 안에 맴버 정보들을 받는다.
         context = {
             'memberEmail': request.GET.get('member_email'),
             'memberType': request.GET.get('member_type'),
@@ -106,13 +127,20 @@ class MemberJoinView(View):
         #     'member_name': member_info['member_name']
         # }
 
+        # render로 context를 보내준다.
         return render(request, 'login/college-student-join.html', context)
 
     @transaction.atomic
     def post(self, request):
+
+        # request.POST를 data로 넣는다.
         data = request.POST
         user = SocialAccount.objects.get(user=request.user)
+
+        # university 테이블 안에 있는 데이터를 변수안에 넣는다.
         university_major = data['university-member-major']
+
+        # data 안에 테이블 데이터를 받아온다.
         data = {
             # 'member_name': data['member-name'],
             'member_phone': data['member-phone'],
@@ -120,6 +148,8 @@ class MemberJoinView(View):
             # 'member_email': data['member-email'],
             'member_school_email': data['member-school-email'],
         }
+
+        # 가장 최근에 생성된 아이디를 변수 안에 넣는다.
         last_member = Member.objects.latest('id')
 
         # OAuth 검사
@@ -140,7 +170,10 @@ class MemberJoinView(View):
             print("존재함1")
             member = Member.objects.create(**data)
 
+        # 가장 최근에 검색된 id를 가지고 와 member변수 안에 넣는다.
         member = Member.objects.get(id=last_member.id)
+
+        # university_info안에 university 테이블에 데이터, member 데이터를 넣어준다.
         university_info = {
             'university_member_birth': "1999-09-22",
             'university_member_major': university_major,
@@ -148,31 +181,48 @@ class MemberJoinView(View):
         }
         print(university_info, member.__dict__)
 
+        # university_info를 추가시켜준다.
         University.objects.create(**university_info)
 
+        # redirect로 로그인 페이지로 넘겨준다.
         return redirect('member:login')
 
 
 class MemberLoginView(View):
     def get(self, request):
+
+        # render로 로그인 페이지로 넘겨준다.
         return render(request, 'login/login.html')
 
     def post(self, request):
+        # request.POST를 변수안에 넣어준다.
         data = request.POST
+
+        # data안에 이메일이랑 패스워드를 가져온다
+        # 로그인 페이지에는 이메일과 패스워드 밖에 안가져와서
         data = {
             'member_email': data['member-email'],
             'member_password': data['member-password']
         }
 
+        # 맴버 이메일과 맴버 패스워드를 필터링을 거쳐 member라는 변수 안에 넣어준다.
         member = Member.objects.filter(member_email=data['member_email'], member_password=data['member_password'])
         # print(member)
         url = '/'
+
+        # 맴버 이메일과 패스워드가 존재하면 (성공)
         if member.exists():
             # 성공
+            # MemberSerializer(member.first()).data는 선택된 멤버 객체를 시리얼라이즈하여 JSON 형식으로 변환합니다.
+            # 맴버테이블의 첫번쨰를 가져와서 맴버가 있는 색션에 넣어준다.
             request.session['member'] = MemberSerializer(member.first()).data
             url = '/'
+
+            # 메인페이지로 넘겨준다.
             return redirect('/')
 
+        # 안되면 로그인 페이지로 다시 보내준다.
+        # JS 부분에 check=False를 쓰여서 유효성 검사를 해준다.
         return render(request, 'login/login.html', {'check': False})
 
 
@@ -186,16 +236,27 @@ class SendVerificationCodeView(APIView):
         # print(data['member-school-email'])
         # mail_receiver = data.get('member_school_email')
         # mail_receiver = json.dump(data)
+
+        # 메일 받는 것을 학교 메일로 받아준다.
         mail_receiver = school
         print(mail_receiver)
+
+        # 0123456789 숫자중에 6자리를 랜덤으로 넘겨서 rn변수에 넣어준다.
         rn = ''.join(random.choices('0123456789', k=6))
 
-
+        # 포트 번호를 587로 고정시켜준다.
         port = 587
         smtp_server = "smtp.gmail.com"
+        # 보내는 사람 메일을 변수에 넣어준다.
         sender_email = "wmoon0024@gmail.com"
+
+        # mail_receiver에 있는 값을 변수에 넣어준다.
         receiver_email = mail_receiver
+
+        # 구글 1회성 비밀번호
         password = "pqxh ciic adcg numz"
+
+        # 이메일 보낼때 쓰는 메세지
         message = f"<h1>인증번호 6자리 입니다 : {rn}</h1>"
 
         print("메일 들어옴")
@@ -293,23 +354,21 @@ class MemberActivateEmailView(APIView):
 
             return Response('fasjfksa')
 
-
+# 비밀번호 변경 쪽
 class MemberResetPasswordView(View):
     def get(self, request, id, random):
+        # 메일로 링크를 받아 첫 회로 들어오고 나서 지워준다.
+        # 링크를 다시 클릭했을 때 page not found가 뜬다.
         del request.session['random_code']
-        print("아이디", id)
-        print("랜덤", random)
 
-
+        # 맴버 id를 찾아서 변수에 넣어준다.
         member = Member.objects.get(id=id)
-        print("아이디13들어옴")
-        print(member.id)
 
+        # data 안에 맴버 아이디와 랜덤 받은 값을 넣어준다.
         data = {
             'id': member.id,
             'random': random
         }
-        print("여기까지 들어옴")
 
         # if member.id == id:
         #     member.save(update_fields=['member_password'])
@@ -317,48 +376,72 @@ class MemberResetPasswordView(View):
         # request.session['member'] = MemberSerializer(Member.objects.get(id=request.session['member']['id'])).data
         # check = request.GET.get('check')
         # context = {'check': check}
+
+        # 성공 했을시 render로 data값을 넘겨주어 다음 페이지로 넘겨준다.
         return render(request, 'login/reset-link.html', data)
 
     def post(self, request, id, random):
-        print("패스워드쪽 들어옴")
         data = request.POST
+
+        # data 안에 맴버 아이디와 맴버 패스워드를 받는다.
         data = {
 
             'member_id': data['member-id'],
             'member_password': data['member-password'],
         }
-        print("패스워드 들어옴1")
 
+        # 맴버 아이디를 받아 member 변수에 넣어준다.
         member = Member.objects.get(id=id)
-        member.member_password = data['member_password']
-        print("패스워드 들어옴2")
 
+        # 맴버 테이블에 패스워드 값을 받아 변수에 넣어준다.
+        member.member_password = data['member_password']
+
+        # 패스워드를 업데이트 쿼리를 써서 업데이트 시켜준다.
         member.save(update_fields=['member_password'])
-        print("패스워드 들어옴3")
+
+        # 성공하면 로그인 페이지로 넘겨준다.
         return render(request, 'login/login.html')
 
 
 class MemberMainView(View):
     def get(self, request):
         # member_name = request.session.get('member_name')
+
+        # 맴버 테이블에 있는 맴버 id를 받아온 객체를 시리얼라이즈하여 JSON 형식으로 변환한다.
+        # 객체를 맴버 이름에 있는 색션에 넣어준다.
         request.session['member_name'] = MemberSerializer(Member.objects.get(id=request.session['member']['id'])).data
-        print(request.session['member_name'])
+
+        # 맴버 id에 있는 색션을 member 변수에 넣어준다.
         member = request.session['member']['id']
+
+        # 맴버id와 위에 있는 member를 필터링 하여 첫번쨰 것을 profile 변수에 넣어준다.
         profile = MemberFile.objects.filter(member_id=member).first()
 
+        # default_profile_url 에 기본 이미지를 넣어준다.
         default_profile_url = 'https://static.wadiz.kr/assets/icon/profile-icon-1.png'
 
+        # 프로필이 아무것도 없으면
         if profile is None :
+
+            # 기본 이미지 생성
             profile = default_profile_url
+
+            # context 안에 profile 넣어준다.
             context = {
                 'profile' : profile
             }
+
+            # render로 context 받은 것을 메인 페이지에 넘겨준다.
             return render(request, 'main/main-page.html', context)
+
+        # 프로필이 있으면
         else :
+            # context 안에 profile을 넣어준다.
             context = {
                 'profile': profile
             }
 
+            # render로 context 받은 것을 메인 페이지에 넘겨준다.
             return render(request, 'main/main-page.html',context)
 
 

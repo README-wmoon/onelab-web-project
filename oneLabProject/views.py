@@ -24,14 +24,25 @@ from rest_framework.response import Response
 
 class MainView(View):
     def get(self, request):
+        # 공모전, share, onelab쪽 다 동일함
+        # Place 테이블에 있는 모든 것을 places 변수에 넣어준다.
         places = Place.objects.all()
+
+        # place_info에 places querySert을 써 리스트로 받는다.
         place_info = {
             'places': []
         }
         # place 파일쪽
+        # places 안에 있는것을 place로 for문을 쓰인다.
+        # 한개가 아닌 여러개를 쓰이고 querySet으로 쓰이고 싶을때
         for place in places:
+
+            # place_files =
+            # 리스트에 placefile_set.values에 path 받아와 변수 안에 넣는다.
             place_files = list(place.placefile_set.values('path'))
+            # place_info 안에 places를 추가 해준다.
             place_info['places'].append({
+                # HTML에 쓰일 객체들을 추가시켜준다.
                 'files': place_files,
                 'place_title': place.place_title,
                 'place_address': place.school.school_member_address,
