@@ -1,4 +1,8 @@
 # onelab |Django|python 프로젝트 : 대학 통합 커뮤니티 플랫폼 서비스 <a href="one-lab.world">(http://one-lab.world)</a> <- *로그인* 필수 입니다
+## onelab id : onelab@onelab.com
+## pw : 1234
+## school id : school@kaist.ac.kr
+## pw : 1234
 
 ## 🖥️ 프로젝트 소개
 여러 대학생들의 자료, 대학교의 공간, 정보 등을 공유함으로써 교육의 품질 향상시키는 플랫폼 입니다. 이를 통해 교육 수준을 높이고, 교육의 품질을 균일하게 유지하며, 교육의 상향 평준화를 이루는 것이 목표입니다.<br>
